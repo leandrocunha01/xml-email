@@ -1,0 +1,25 @@
+POST http://localhost:8080
+Accept: application/xml
+Content-Type: application/xml
+
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:esb="http://www.smartnet.com.br/services/esbEmailService">
+    <soapenv:Body>
+        <esb:SendEmailService_Req>
+            <email>
+                <toAddress>leandrocunha01@gmail.com</toAddress>
+                <fromAddress>naoresponda@vr.com.br</fromAddress>
+                <subjectOfEmail>Código de confirmação</subjectOfEmail>
+                <emailMessageText>
+                    <![CDATA[<html>
+        <head>
+        </head>
+        <body>
+        <b>adasd asd asd asdasdasdasdasdasdasdasdasdasdasdas</b>
+        </body>
+        </html>
+     ]]>
+                </emailMessageText>
+            </email>
+        </esb:SendEmailService_Req>
+    </soapenv:Body>
+</soapenv:Envelope>
