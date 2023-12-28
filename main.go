@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/joho/godotenv"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/smtp"
@@ -44,7 +44,7 @@ func handleSOAPRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Leia o corpo da solicitação
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
@@ -64,7 +64,10 @@ func handleSOAPRequest(w http.ResponseWriter, r *http.Request) {
 	go sendEmail(envelope.getClaim())
 
 	// Responder ao cliente
-	w.Write([]byte("SOAP request received and processed successfully"))
+	_, err = w.Write([]byte("SOAP request received and processed successfully"))
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func sendEmail(email Email) {
@@ -100,7 +103,10 @@ func main() {
 	// Inicie o servidor na porta 8080
 	port := 8080
 	fmt.Printf("Starting server on :%d...\n", port)
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 var smtpPassword string
