@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
 	"net/smtp"
 	"os"
+	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 func (envelop Envelope) getClaim() Email {
@@ -64,7 +66,10 @@ func handleSOAPRequest(w http.ResponseWriter, r *http.Request) {
 	go sendEmail(envelope.getClaim())
 
 	// Responder ao cliente
-	_, err = w.Write([]byte("SOAP request received and processed successfully"))
+	_, err = w.Write([]byte(`<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+	<soapenv:Body><NS1:SendEmailService_Resp xmlns:NS1="http://www.smartnet.com.br/services/esbEmailService">
+	<return><codRet>-99</codRet><msgRet>Erro no serviço: SOAP Envelope has invalid namespace--Envelope</msgRet>
+	</return></NS1:SendEmailService_Resp></soapenv:Body></soapenv:Envelope>`))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -100,10 +105,9 @@ func main() {
 	// Roteamento de solicitações SOAP para a função de manipulação
 	http.HandleFunc("/", handleSOAPRequest)
 
-	// Inicie o servidor na porta 8080
-	port := 8080
-	fmt.Printf("Starting server on :%d...\n", port)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	// Inicie o servidor na porta srvPort
+	fmt.Printf("Starting server on :%d...\n", int32(srvPort))
+	err := http.ListenAndServe(fmt.Sprintf(":%d", srvPort), nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -115,6 +119,8 @@ var smtpServer string
 
 var smtpPort string
 var smtpUser string
+var srvPort int
+var srvPath string = "/"
 
 func init() {
 	err := godotenv.Load(".env")
@@ -126,5 +132,7 @@ func init() {
 	smtpServer = os.Getenv("SMTP_SERVER")
 	smtpPort = os.Getenv("SMTP_PORT")
 	smtpUser = os.Getenv("SMTP_USER")
+	srvPort, _ = strconv.Atoi(os.Getenv("HTTP_SERVER_PORT"))
+	srvPath = os.Getenv("HTTP_SERVER_PATH")
 
 }
