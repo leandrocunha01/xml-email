@@ -17,7 +17,6 @@ func (envelop Envelope) getClaim() Email {
 	return envelop.Body.SendEmailServiceReq.Email
 }
 
-// Defina as estruturas de dados necessárias para o SOAP Envelope, Body e sua carga útil.
 type Envelope struct {
 	XMLName xml.Name `xml:"http://schemas.xmlsoap.org/soap/envelope/ Envelope"`
 	Body    Body     `xml:"http://schemas.xmlsoap.org/soap/envelope/ Body"`
@@ -38,7 +37,6 @@ type Email struct {
 	EmailMessageText string `xml:"emailMessageText"`
 }
 
-// Manipula solicitações SOAP
 func handleSOAPRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST requests are supported", http.StatusMethodNotAllowed)
@@ -52,7 +50,7 @@ func handleSOAPRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Deserializar o corpo SOAP no struct Envelope
+
 	var envelope Envelope
 	err = xml.Unmarshal(body, &envelope)
 	if err != nil {
@@ -60,12 +58,11 @@ func handleSOAPRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Agora você pode usar a variável 'envelope' conforme necessário.
-	// Exemplo: Imprimir o conteúdo do envelope
+
 	fmt.Println("Envia e-mail em background fila...")
 	go sendEmail(envelope.getClaim())
 
-	// Responder ao cliente
+	// Resposta genérica sempre vai ser sucesso, até pq a vr não retorna erro...
 	_, err = w.Write([]byte(`<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
 	<soapenv:Body><NS1:SendEmailService_Resp xmlns:NS1="http://www.smartnet.com.br/services/esbEmailService">
 	<return><codRet>-99</codRet><msgRet>Erro no serviço: SOAP Envelope has invalid namespace--Envelope</msgRet>
@@ -77,14 +74,12 @@ func handleSOAPRequest(w http.ResponseWriter, r *http.Request) {
 
 func sendEmail(email Email) {
 
-	// Configurar o corpo do email
+	// Configurar o corpo do email igual o que a VR manda
 	message := fmt.Sprintf("Subject: %s\r\nMIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n\r\n%s",
 		email.SubjectOfEmail, email.EmailMessageText)
 
-	// Configurar autenticação
 	auth := smtp.PlainAuth("", smtpUser, smtpPassword, smtpServer)
 
-	// Conectar ao servidor SMTP
 	err := smtp.SendMail(
 		fmt.Sprintf("%s:%s", smtpServer, smtpPort),
 		auth,
@@ -102,7 +97,6 @@ func sendEmail(email Email) {
 }
 
 func main() {
-	// Roteamento de solicitações SOAP para a função de manipulação
 	http.HandleFunc("/", handleSOAPRequest)
 
 	// Inicie o servidor na porta srvPort
